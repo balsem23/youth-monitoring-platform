@@ -1,0 +1,71 @@
+{% extends 'core/base.html' %}
+{% block title %}Audit Logs — YouthCare{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Audit Log History</h1>
+        <p class="page-subtitle">Track all platform operations, transitions, user actions, CSV imports, and security alerts.</p>
+    </div>
+</div>
+
+<div class="card">
+    <form method="get" class="filter-bar">
+        <div class="filter-group" style="max-width:300px;">
+            <label>Action Type</label>
+            <select name="action_type" class="form-control" onchange="this.form.submit()">
+                <option value="">All Action Types</option>
+                {% for val, display in action_choices %}
+                    <option value="{{ val }}" {% if selected_action_type == val %}selected{% endif %}>{{ display }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% if selected_action_type %}
+        <div style="display:flex;align-items:flex-end;padding-bottom:1px;">
+            <a href="{% url 'audit_log_list' %}" class="btn btn-secondary">Clear Filter</a>
+        </div>
+        {% endif %}
+    </form>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr><th>Timestamp</th><th>User</th><th>Role</th><th>Action Type</th><th>Result</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+                {% for log in page_obj %}
+                <tr>
+                    <td>{{ log.created_at|date:"Y-m-d H:i:s" }}</td>
+                    <td>{{ log.user.username|default:"System" }}</td>
+                    <td><span class="badge badge-slate">{{ log.user_role|default:"SYSTEM" }}</span></td>
+                    <td><strong>{{ log.get_action_type_display }}</strong></td>
+                    <td>
+                        {% if log.action_result == 'SUCCESS' %}
+                            <span class="badge badge-success">Success</span>
+                        {% else %}
+                            <span class="badge badge-danger">Failure</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ log.description }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" style="text-align:center;color:var(--slate-400);">No log records found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page=1{% if selected_action_type %}&action_type={{ selected_action_type }}{% endif %}" class="btn btn-secondary btn-sm">&laquo; First</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if selected_action_type %}&action_type={{ selected_action_type }}{% endif %}" class="btn btn-secondary btn-sm">Previous</a>
+        {% endif %}
+        <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if selected_action_type %}&action_type={{ selected_action_type }}{% endif %}" class="btn btn-secondary btn-sm">Next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if selected_action_type %}&action_type={{ selected_action_type }}{% endif %}" class="btn btn-secondary btn-sm">Last &raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

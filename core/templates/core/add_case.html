@@ -1,0 +1,33 @@
+{% extends 'core/base.html' %}
+{% block title %}Start New Case — YouthCare{% endblock %}
+{% block content %}
+<a href="{% url 'student_detail' student_id=student.id %}" class="back-link">&larr; Back to Student</a>
+
+<div class="card" style="max-width:560px;">
+    <h2 class="card-title">Start New Case</h2>
+    <p class="card-subtitle">Student: <strong>{{ student.first_name }} {{ student.last_name }}</strong></p>
+    <p style="font-size:14px;color:var(--slate-500);margin:0 0 20px;">Create a tracked workflow case to manage interventions, academic support, or counselor follow-up.</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <div style="display:none;">{{ form.student }}</div>
+        <div class="form-group">
+            <label class="form-label">Case Title</label>
+            {{ form.title }}
+            {% if form.title.errors %}<div class="form-error">{{ form.title.errors }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+            <label class="form-label">Description & Background</label>
+            {{ form.description }}
+            {% if form.description.errors %}<div class="form-error">{{ form.description.errors }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+            <label class="form-label">Assign Case To</label>
+            {{ form.assigned_to }}
+            {% if form.assigned_to.errors %}<div class="form-error">{{ form.assigned_to.errors }}</div>{% endif %}
+        </div>
+        <button type="submit" class="btn">Create Case</button>
+        <a href="{% url 'student_detail' student_id=student.id %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

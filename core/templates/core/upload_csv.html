@@ -1,0 +1,33 @@
+{% extends 'core/base.html' %}
+{% block title %}Upload CSV — YouthCare{% endblock %}
+{% block content %}
+<a href="{% url 'dashboard' %}" class="back-link">&larr; Back to Dashboard</a>
+
+<div class="card" style="max-width:640px;">
+    <h2 class="card-title">Upload Students CSV</h2>
+    <p class="card-subtitle">Upload a CSV file containing student attendance and academic records. This will create or update student records on the platform.</p>
+
+    <div class="info-box">
+        <h3>Expected CSV Schema & Rules</h3>
+        <ul>
+            <li>Required header fields: <code>first_name</code>, <code>last_name</code>, <code>date_of_birth</code>, <code>attendance_rate</code>, <code>average_grade</code></li>
+            <li><code>date_of_birth</code> must be in <strong>YYYY-MM-DD</strong> format.</li>
+            <li><code>attendance_rate</code> and <code>average_grade</code> must be numbers between <strong>0 and 100</strong>.</li>
+            <li>If a student with the same name and date of birth already exists, their records will be updated.</li>
+        </ul>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+            <label class="form-label">Select CSV file</label>
+            {{ form.csv_file }}
+            {% if form.csv_file.errors %}
+                <div class="form-error">{{ form.csv_file.errors }}</div>
+            {% endif %}
+        </div>
+        <button type="submit" class="btn">Upload and Ingest</button>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

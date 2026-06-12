@@ -1,0 +1,25 @@
+{% extends "core/base.html" %}
+{% block title %}Add Attendance — YouthCare{% endblock %}
+{% block content %}
+<a href="{% url 'student_detail' student.id %}" class="back-link">&larr; Back to Student</a>
+
+<div class="card" style="max-width:560px;">
+    <h2 class="card-title">Add Attendance</h2>
+    <p class="card-subtitle">Student: <strong>{{ student.first_name }} {{ student.last_name }}</strong></p>
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            <label class="form-label">Date</label>
+            {{ form.date }}
+        </div>
+        <div class="form-group">
+            <label class="form-check">
+                {{ form.present }} <span>Present</span>
+            </label>
+        </div>
+        <button type="submit" class="btn">Save Attendance</button>
+        <a href="{% url 'student_detail' student.id %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

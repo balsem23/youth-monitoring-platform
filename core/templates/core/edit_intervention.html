@@ -1,0 +1,33 @@
+{% extends "core/base.html" %}
+{% block title %}Edit Intervention — YouthCare{% endblock %}
+{% block content %}
+<a href="{% url 'student_detail' student.id %}" class="back-link">&larr; Back to Student</a>
+
+<div class="card" style="max-width:560px;">
+    <h2 class="card-title">Edit Intervention</h2>
+    <p class="card-subtitle">Student: <strong>{{ student.first_name }} {{ student.last_name }}</strong></p>
+    <p class="card-subtitle">Current status: <span class="badge badge-{{ intervention.status|lower }}">{{ intervention.status }}</span></p>
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            <label class="form-label">Title</label>
+            {{ form.title }}
+        </div>
+        <div class="form-group">
+            <label class="form-label">Description</label>
+            {{ form.description }}
+        </div>
+        <div class="form-group">
+            <label class="form-label">Recommendation Reason</label>
+            {{ form.recommendation_reason }}
+        </div>
+        <div class="form-group">
+            <label class="form-label">Status</label>
+            {{ form.status }}
+        </div>
+        <button type="submit" class="btn">Update Intervention</button>
+        <a href="{% url 'student_detail' student.id %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

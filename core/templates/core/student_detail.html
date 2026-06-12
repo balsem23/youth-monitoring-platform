@@ -1,0 +1,168 @@
+{% extends "core/base.html" %}
+{% block title %}Student Detail — YouthCare{% endblock %}
+
+{% block content %}
+<a href="{% url 'student_list' %}" class="back-link">&larr; Back to Students</a>
+
+<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+        <div>
+            <h1 style="margin:0;font-size:26px;font-weight:800;">{{ student.first_name }} {{ student.last_name }}</h1>
+            <p style="color:var(--slate-500);margin:4px 0 0;">Date of Birth: <strong>{{ student.date_of_birth|date:"Y-m-d" }}</strong></p>
+        </div>
+        <div>
+            {% if student.risk_level == 'HIGH' %}
+                <span class="badge badge-danger" style="font-size:15px;padding:8px 16px;">HIGH RISK</span>
+            {% elif student.risk_level == 'MEDIUM' %}
+                <span class="badge badge-warning" style="font-size:15px;padding:8px 16px;">MEDIUM RISK</span>
+            {% else %}
+                <span class="badge badge-success" style="font-size:15px;padding:8px 16px;">LOW RISK</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="detail-grid">
+        <div>
+            <h3 style="color:var(--slate-700);font-size:16px;font-weight:700;margin:0 0 12px;">Academic & Attendance</h3>
+            <p class="detail-label">Attendance Rate</p>
+            <p class="detail-value">{{ student.attendance_rate|floatformat:2 }}%</p>
+            <p class="detail-label">Average Grade</p>
+            <p class="detail-value">{{ student.average_grade }}</p>
+            <p class="detail-label">Risk Explanation</p>
+            <p class="detail-value">{{ student.risk_explanation }}</p>
+        </div>
+        <div>
+            <h3 style="color:var(--slate-700);font-size:16px;font-weight:700;margin:0 0 12px;">Confidential Notes</h3>
+            {% if is_notes_redacted %}
+                <div class="redacted-box">
+                    <strong>&#128274; Access Blocked:</strong> Your current role (Teacher) does not have permission to view confidential counselor notes.
+                </div>
+            {% else %}
+                <div class="notes-box">{{ student.counselor_notes|default:"No confidential notes recorded yet." }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="action-row">
+        {% if request.user.profile.role == "TEACHER" or request.user.profile.role == "ADMIN" %}
+            <a class="btn" href="{% url 'add_attendance' student.id %}">Add Attendance</a>
+            <a class="btn" href="{% url 'add_case' student.id %}" style="background:#0284c7;">Start Tracking Case</a>
+        {% endif %}
+        {% if request.user.profile.role == "COUNSELOR" or request.user.profile.role == "ADMIN" %}
+            <a class="btn" href="{% url 'add_intervention' student.id %}">Create Intervention</a>
+            <a class="btn" href="{% url 'add_appointment' student.id %}">Schedule Appointment</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h2>Tracked Case Workflows</h2></div>
+    <p class="card-subtitle">Each student can have one or more case workflows following the state machine progress rules.</p>
+    <div class="table-wrapper">
+        <table>
+            <thead><tr><th>Case ID</th><th>Title</th><th>Status</th><th>Assigned To</th><th>Created At</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% for case in cases %}
+                <tr>
+                    <td>#{{ case.id }}</td>
+                    <td><strong>{{ case.title }}</strong></td>
+                    <td>
+                        {% if case.status == 'NEW' %}
+                            <span class="badge badge-blue">New</span>
+                        {% elif case.status == 'IN_REVIEW' %}
+                            <span class="badge badge-warning">In Review</span>
+                        {% elif case.status == 'INTERVENTION_PLANNED' %}
+                            <span class="badge badge-success">Intervention Planned</span>
+                        {% elif case.status == 'FOLLOW_UP' %}
+                            <span class="badge badge-purple">Follow-up</span>
+                        {% elif case.status == 'CLOSED' %}
+                            <span class="badge badge-slate">Closed</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ case.assigned_to.username|default:"Unassigned" }}</td>
+                    <td>{{ case.created_at|date:"Y-m-d H:i" }}</td>
+                    <td><a href="{% url 'case_detail' case_id=case.id %}" class="btn btn-secondary btn-sm">Manage</a></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" style="text-align:center;color:var(--slate-400);">No active case workflows tracked for this student.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h2>Active Alerts</h2></div>
+    <ul class="timeline">
+        {% for alert in alerts %}
+        <li class="timeline-item">
+            <span class="timeline-dot {% if alert.alert_type == 'EDUCATION' %}failure{% else %}warning{% endif %}"></span>
+            <span class="timeline-time">{{ alert.created_at|date:"Y-m-d" }}</span>
+            <span class="badge {% if alert.alert_type == 'EDUCATION' %}badge-danger{% else %}badge-warning{% endif %}" style="margin:0 8px;">{{ alert.get_alert_type_display }}</span>
+            <div class="timeline-desc">{{ alert.message }}</div>
+        </li>
+        {% empty %}
+        <li style="color:var(--slate-400);padding:12px 0;">No active risk alerts recorded.</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div class="card">
+    <div class="card-header"><h2>Interventions</h2></div>
+    {% for intervention in interventions %}
+    <div style="padding:16px;margin-bottom:12px;border:1px solid var(--slate-100);border-radius:var(--radius);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <strong style="font-size:15px;">{{ intervention.title }}</strong>
+            <span class="badge {% if intervention.status == 'CLOSED' %}badge-slate{% else %}badge-success{% endif %}">{{ intervention.get_status_display }}</span>
+        </div>
+        <div style="font-size:14px;color:var(--slate-600);">
+            <p style="margin:4px 0;"><strong>Date:</strong> {{ intervention.created_at|date:"Y-m-d" }}</p>
+            <p style="margin:4px 0;"><strong>Description:</strong> {{ intervention.description }}</p>
+            {% if intervention.recommendation_reason %}
+                <p style="margin:4px 0;"><strong>Recommendation Reason:</strong> {{ intervention.recommendation_reason }}</p>
+            {% endif %}
+        </div>
+        {% if request.user.profile.role == "COUNSELOR" or request.user.profile.role == "ADMIN" %}
+        <div style="margin-top:10px;">
+            <a href="{% url 'edit_intervention' intervention.id %}" class="btn btn-secondary btn-sm">Edit</a>
+        </div>
+        {% endif %}
+    </div>
+    {% empty %}
+    <p style="color:var(--slate-400);">No interventions registered.</p>
+    {% endfor %}
+</div>
+
+<div class="card">
+    <div class="card-header"><h2>Appointments</h2></div>
+    <ul class="timeline">
+        {% for appointment in appointments %}
+        <li class="timeline-item">
+            <span class="timeline-dot {% if appointment.attended %}success{% else %}failure{% endif %}"></span>
+            <span class="timeline-time">{{ appointment.date|date:"Y-m-d" }}</span>
+            <span class="badge {% if appointment.attended %}badge-success{% else %}badge-danger{% endif %}">{{ appointment.attended|yesno:"Attended,Missed" }}</span>
+            <div class="timeline-desc">{{ appointment.notes|default:"No notes recorded." }}</div>
+        </li>
+        {% empty %}
+        <li style="color:var(--slate-400);padding:12px 0;">No appointments scheduled.</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div class="card">
+    <div class="card-header"><h2>Audit History</h2></div>
+    <ul class="timeline">
+        {% for log in logs %}
+        <li class="timeline-item">
+            <span class="timeline-dot {% if log.action_result == 'SUCCESS' %}success{% else %}failure{% endif %}"></span>
+            <span class="timeline-time">[{{ log.created_at|date:"Y-m-d H:i:s" }}]</span>
+            <strong style="color:var(--slate-800);">{{ log.get_action_type_display }}</strong>
+            <span style="font-size:12px;color:var(--slate-500);">by {{ log.user.username|default:"System" }} ({{ log.user_role|default:"SYSTEM" }})</span>
+            <div class="timeline-desc">{{ log.description }}</div>
+        </li>
+        {% empty %}
+        <li style="color:var(--slate-400);padding:12px 0;">No audit logs recorded for this student.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

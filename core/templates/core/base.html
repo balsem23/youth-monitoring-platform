@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}YouthCare{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'core/style.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>YouthCare</h2>
+    <p class="sidebar-sub">Youth Monitoring Platform</p>
+
+    <div class="disclaimer">Decision support only — not clinical/legal authority</div>
+
+    <div class="nav-section">Navigation</div>
+    <a href="{% url 'dashboard' %}">Dashboard</a>
+    <a href="{% url 'student_list' %}">Students</a>
+    <a href="{% url 'case_list' %}">Cases</a>
+    <a href="{% url 'export_students_csv' %}">Export Report</a>
+
+    {% if request.user.profile.role == "ADMIN" or request.user.profile.role == "COUNSELOR" %}
+        <div class="nav-section">Monitoring</div>
+        <a href="{% url 'audit_log_list' %}">Audit Logs</a>
+    {% endif %}
+
+    {% if request.user.profile.role == "ADMIN" %}
+        <div class="nav-section">Administration</div>
+        <a href="{% url 'upload_csv' %}">Upload CSV</a>
+        <a href="{% url 'admin_settings' %}">Risk Thresholds</a>
+        <a href="/admin/">Django Admin</a>
+    {% endif %}
+
+    <div class="sidebar-divider"></div>
+
+    <div class="user-card" style="margin-top:auto;">
+        <div class="name">{{ request.user.username }}</div>
+        <div class="role">{{ request.user.profile.role }}</div>
+    </div>
+    <form method="post" action="{% url 'logout' %}" style="margin-top:8px;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger btn-sm" style="width:100%;justify-content:center;">Logout</button>
+    </form>
+</div>
+
+<div class="main-content">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    {% block content %}{% endblock %}
+</div>
+
+</body>
+</html>

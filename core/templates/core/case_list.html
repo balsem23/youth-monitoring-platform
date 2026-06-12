@@ -1,0 +1,75 @@
+{% extends 'core/base.html' %}
+{% block title %}Cases — YouthCare{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Student Cases</h1>
+        <p class="page-subtitle">Track and manage student workflow cases</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'student_list' %}" class="btn">Start New Case</a>
+    </div>
+</div>
+
+<div class="card">
+    <form method="get" class="filter-bar">
+        <div class="filter-group">
+            <label>Status</label>
+            <select name="status" class="form-control">
+                <option value="">All Statuses</option>
+                {% for val, display in status_choices %}
+                    <option value="{{ val }}" {% if selected_status == val %}selected{% endif %}>{{ display }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Assignee</label>
+            <select name="assigned_to" class="form-control">
+                <option value="">All Assignees</option>
+                {% for assignee in assignees %}
+                    <option value="{{ assignee.id }}" {% if selected_assigned_to == assignee.id|stringformat:"s" %}selected{% endif %}>{{ assignee.username }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-end;padding-bottom:1px;">
+            <button type="submit" class="btn">Filter</button>
+            <a href="{% url 'case_list' %}" class="btn btn-secondary">Clear</a>
+        </div>
+    </form>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr><th>Case ID</th><th>Student</th><th>Title</th><th>Status</th><th>Assigned To</th><th>Created At</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+                {% for case in cases %}
+                <tr>
+                    <td>#{{ case.id }}</td>
+                    <td><a href="{% url 'student_detail' student_id=case.student.id %}" style="font-weight:600;">{{ case.student }}</a></td>
+                    <td>{{ case.title }}</td>
+                    <td>
+                        {% if case.status == 'NEW' %}
+                            <span class="badge badge-blue">New</span>
+                        {% elif case.status == 'IN_REVIEW' %}
+                            <span class="badge badge-warning">In Review</span>
+                        {% elif case.status == 'INTERVENTION_PLANNED' %}
+                            <span class="badge badge-success">Intervention Planned</span>
+                        {% elif case.status == 'FOLLOW_UP' %}
+                            <span class="badge badge-purple">Follow-up</span>
+                        {% elif case.status == 'CLOSED' %}
+                            <span class="badge badge-slate">Closed</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ case.assigned_to.username|default:"Unassigned" }}</td>
+                    <td>{{ case.created_at|date:"Y-m-d H:i" }}</td>
+                    <td><a href="{% url 'case_detail' case_id=case.id %}" class="btn btn-secondary btn-sm">View Details</a></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" style="text-align:center;color:var(--slate-400);">No cases found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

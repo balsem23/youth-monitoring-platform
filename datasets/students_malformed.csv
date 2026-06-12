@@ -1,0 +1,11 @@
+first_name,last_name,date_of_birth,attendance_rate,average_grade
+MissingFirst,,2010-04-12,94.5,14.2
+Tarek,,2010-04-12,94.5,14.2
+Sonia,Masmoudi,2011/08/22,88.2,11.5
+Khalil,Bouaziz,2009-11-05,145.0,9.8
+Hana,Rekik,2010-01-30,99.0,-5.5
+Anis,Trabelsi,2011-02-14,abc,8.2
+Rania,Gharbi,2010-09-18,92.0,xyz
+Sami,Saidi,2009-07-07,,10.0
+,Ben Salem,2012-05-15,62.0,11.2
+Mohamed,Kallel,,97.0,15.4

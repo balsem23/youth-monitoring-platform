@@ -1,0 +1,35 @@
+{% extends "core/base.html" %}
+{% block title %}Risk Thresholds — YouthCare{% endblock %}
+{% block content %}
+<a href="{% url 'dashboard' %}" class="back-link">&larr; Back to Dashboard</a>
+
+<div class="card" style="max-width:560px;">
+    <h2 class="card-title">Risk Threshold Settings</h2>
+    <p class="card-subtitle">Configure the attendance-rate thresholds that determine student risk levels.</p>
+
+    <div class="info-box">
+        <h3>Current Values</h3>
+        <p style="margin:0;font-size:14px;">
+            HIGH risk: &lt; <strong>{{ thresholds.high_risk_threshold }}%</strong> attendance<br>
+            MEDIUM risk: &lt; <strong>{{ thresholds.medium_risk_threshold }}%</strong> attendance<br>
+            LOW risk: &ge; {{ thresholds.medium_risk_threshold }}% attendance
+        </p>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            <label class="form-label">High Risk Threshold (%)</label>
+            {{ form.high_risk_threshold }}
+            <p class="form-help">Attendance below this value = HIGH risk (default: 50)</p>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Medium Risk Threshold (%)</label>
+            {{ form.medium_risk_threshold }}
+            <p class="form-help">Attendance below this value = MEDIUM risk (default: 75)</p>
+        </div>
+        <button type="submit" class="btn">Save Settings</button>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

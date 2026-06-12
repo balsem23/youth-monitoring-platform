@@ -1,0 +1,78 @@
+{% extends "core/base.html" %}
+{% block title %}Students — YouthCare{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Students Registry</h1>
+        <p class="page-subtitle">View, filter, and manage student records</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'export_students_csv' %}?risk_level={{ selected_risk_level }}" class="btn btn-success">Export Filtered CSV</a>
+    </div>
+</div>
+
+<div class="card">
+    <form method="GET" class="filter-bar">
+        <div class="filter-group">
+            <label>Search Student</label>
+            <input type="text" name="search" class="form-control" placeholder="Search by name..." value="{{ search|default:'' }}">
+        </div>
+        <div class="filter-group">
+            <label>Risk Level</label>
+            <select name="risk_level" class="form-control">
+                <option value="">All Risks</option>
+                <option value="LOW" {% if selected_risk_level == "LOW" %}selected{% endif %}>Low</option>
+                <option value="MEDIUM" {% if selected_risk_level == "MEDIUM" %}selected{% endif %}>Medium</option>
+                <option value="HIGH" {% if selected_risk_level == "HIGH" %}selected{% endif %}>High</option>
+            </select>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-end;padding-bottom:1px;">
+            <button type="submit" class="btn">Filter</button>
+            <a href="{% url 'student_list' %}" class="btn btn-secondary">Reset</a>
+        </div>
+    </form>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Attendance Rate</th>
+                    <th>Average Grade</th>
+                    <th>Risk Level</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td><a href="{% url 'student_detail' student.id %}" style="font-weight:600;font-size:15px;text-decoration:none;">{{ student.first_name }} {{ student.last_name }}</a></td>
+                    <td>{{ student.attendance_rate|floatformat:2 }}%</td>
+                    <td>{{ student.average_grade }}</td>
+                    <td>
+                        {% if student.risk_level == "HIGH" %}
+                            <span class="badge badge-danger">HIGH</span>
+                        {% elif student.risk_level == "MEDIUM" %}
+                            <span class="badge badge-warning">MEDIUM</span>
+                        {% else %}
+                            <span class="badge badge-success">LOW</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'student_detail' student.id %}" class="btn btn-secondary btn-sm">View</a>
+                        {% if request.user.profile.role == "TEACHER" or request.user.profile.role == "ADMIN" %}
+                            <a href="{% url 'add_case' student_id=student.id %}" class="btn btn-sm" style="background:#0284c7;">Start Case</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align:center;color:var(--slate-400);">No students found matching current filters.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

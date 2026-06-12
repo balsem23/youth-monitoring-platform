@@ -1,0 +1,128 @@
+{% extends 'core/base.html' %}
+{% block title %}Case Details — YouthCare{% endblock %}
+{% block content %}
+<a href="{% url 'case_list' %}" class="back-link">&larr; Back to Cases</a>
+
+<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+        <div>
+            <span style="color:var(--slate-400);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Case #{{ case.id }}</span>
+            <h1 style="margin:4px 0 0;font-size:24px;font-weight:800;">{{ case.title }}</h1>
+            <p style="margin:4px 0 0;color:var(--slate-600);">Student: <a href="{% url 'student_detail' student_id=case.student.id %}" style="font-weight:600;">{{ case.student }}</a></p>
+        </div>
+        <div>
+            {% if case.status == 'NEW' %}
+                <span class="badge badge-blue" style="font-size:15px;padding:8px 16px;">New</span>
+            {% elif case.status == 'IN_REVIEW' %}
+                <span class="badge badge-warning" style="font-size:15px;padding:8px 16px;">In Review</span>
+            {% elif case.status == 'INTERVENTION_PLANNED' %}
+                <span class="badge badge-success" style="font-size:15px;padding:8px 16px;">Intervention Planned</span>
+            {% elif case.status == 'FOLLOW_UP' %}
+                <span class="badge badge-purple" style="font-size:15px;padding:8px 16px;">Follow-up</span>
+            {% elif case.status == 'CLOSED' %}
+                <span class="badge badge-slate" style="font-size:15px;padding:8px 16px;">Closed</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div style="margin:24px 0;background:var(--slate-50);padding:24px;border-radius:var(--radius);border:1px solid var(--slate-200);">
+        <h3 style="margin:0 0 16px;color:var(--slate-700);font-size:15px;font-weight:700;">Workflow Progress</h3>
+        {% with status_map='{"NEW":"1","IN_REVIEW":"2","INTERVENTION_PLANNED":"3","FOLLOW_UP":"4","CLOSED":"5"}' %}
+        <div class="progress-bar">
+            <div class="progress-line"></div>
+            {% for status_val, label in progress_steps %}
+            <div class="progress-step">
+                {% with current_idx=forloop.counter0 %}
+                {% endwith %}
+                <div class="progress-circle 
+                    {% if case.status == status_val %}active
+                    {% elif status_val == 'NEW' and case.status != 'NEW' and case.status != 'CLOSED' %}done
+                    {% elif status_val == 'IN_REVIEW' and case.status in 'INTERVENTION_PLANNED,FOLLOW_UP,CLOSED' %}done
+                    {% elif status_val == 'INTERVENTION_PLANNED' and case.status in 'FOLLOW_UP,CLOSED' %}done
+                    {% elif status_val == 'FOLLOW_UP' and case.status == 'CLOSED' %}done
+                    {% else %}pending{% endif %}">
+                    {% if case.status == status_val %}&#8226;{% elif status_val == 'CLOSED' and case.status == 'CLOSED' %}&#10003;{% else %}{{ forloop.counter }}{% endif %}
+                </div>
+                <div class="progress-label {% if case.status == status_val %}active{% endif %}">{{ label }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endwith %}
+    </div>
+
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;">
+        <div>
+            <h3 style="font-size:15px;font-weight:700;margin:0 0 8px;">Description</h3>
+            <p style="background:var(--slate-50);padding:16px;border-radius:var(--radius);line-height:1.6;border:1px solid var(--slate-100);margin:0 0 20px;">
+                {{ case.description|default:"No description provided." }}
+            </p>
+
+            <h3 style="font-size:15px;font-weight:700;margin:0 0 8px;">Case Details</h3>
+            <div style="border:1px solid var(--slate-100);border-radius:var(--radius);overflow:hidden;">
+                <table style="margin:0;">
+                    <tr><td style="font-weight:600;width:30%;">Created By</td><td>{{ case.created_by.username|default:"System" }}</td></tr>
+                    <tr><td style="font-weight:600;">Assigned To</td><td>{{ case.assigned_to.username|default:"Unassigned" }}</td></tr>
+                    <tr><td style="font-weight:600;">Created At</td><td>{{ case.created_at|date:"Y-m-d H:i:s" }}</td></tr>
+                    <tr><td style="font-weight:600;">Last Updated</td><td>{{ case.updated_at|date:"Y-m-d H:i:s" }}</td></tr>
+                </table>
+            </div>
+        </div>
+        <div>
+            <div style="background:var(--slate-50);border:1px solid var(--slate-200);border-radius:var(--radius);padding:20px;position:sticky;top:20px;">
+                <h3 style="margin:0 0 12px;font-size:15px;font-weight:700;">Transition Case</h3>
+                <p style="font-size:13px;color:var(--slate-500);margin:0 0 16px;line-height:1.4;">Transitioning this case is governed by strict state-machine access rules based on your user role.</p>
+                {% if allowed_transitions %}
+                <form method="post" action="{% url 'case_transition' case_id=case.id %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label class="form-label">Next State</label>
+                        <select name="status" class="form-control" required>
+                            {% for target_status in allowed_transitions %}
+                            <option value="{{ target_status }}">{{ target_status }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn" style="width:100%;justify-content:center;">Perform Transition</button>
+                </form>
+                {% else %}
+                <div style="background:var(--danger-light);color:var(--danger);padding:12px;border-radius:8px;font-size:13px;font-weight:600;">
+                    {% if case.status == 'CLOSED' %}
+                        This case is Closed. No further transitions are allowed.
+                    {% else %}
+                        Your role ({{ request.user.profile.role }}) is not allowed to transition this case from state '{{ case.status }}'.
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h2>Case Transition History (Audit Trail)</h2></div>
+    <div class="table-wrapper">
+        <table>
+            <thead><tr><th>Timestamp</th><th>User</th><th>Role</th><th>Result</th><th>Action Details</th></tr></thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log.created_at|date:"Y-m-d H:i:s" }}</td>
+                    <td>{{ log.user.username }}</td>
+                    <td><span class="badge badge-slate">{{ log.user_role }}</span></td>
+                    <td>
+                        {% if log.action_result == 'SUCCESS' %}
+                            <span class="badge badge-success">Success</span>
+                        {% else %}
+                            <span class="badge badge-danger">Blocked</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ log.description }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" style="text-align:center;color:var(--slate-400);">No workflow events recorded for this case.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
